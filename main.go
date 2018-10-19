@@ -111,12 +111,18 @@ func main() {
 	}
 
 	if !config.Insecure && !haveKey && !isLoopback {
-		log.Fatal("Your configuration says to listen on a non-loopback",
-			" address, using plaintext HTTP. This is a bad idea.",
-			" You should generate and specify a TLS keypair, or",
-			" only listen on the loopback interface (127.0.0.1, or",
-			" ::1 for ipv6). If you REALLY want to do this, you can",
-			" set the Insecure option to true.")
+		msg := "Your configuration says to listen on a non-loopback" +
+			" address, using plaintext HTTP. This is a bad idea." +
+			" You should generate and specify a TLS keypair, or" +
+			" only listen on the loopback interface (127.0.0.1, or" +
+			" ::1 for ipv6). If you REALLY want to do this, you can" +
+			" set the Insecure option to true."
+		if host == "localhost" {
+			msg += "\n\nNote that setting the host to \"localhost\"" +
+				" is not sufficient; you must specify the" +
+				" loopback ip address."
+		}
+		log.Fatal(msg)
 	}
 
 	if haveKey {
