@@ -43,7 +43,10 @@ option `"Insecure": true` in the config file, and remove the `TLSCert`
 and `TLSKey` options.
 
 By default, the server looks for the config file at `./config.json`, but
-the `-config` command line option can be used to override this.
+the `-config` command line option can be used to override this. OBMd
+will refuse to run if the file's permissions are such that any use other
+than the owner may access the file; this is a sanity check for insecure
+configurations, as the file contains sensitive information.
 
 # Api
 

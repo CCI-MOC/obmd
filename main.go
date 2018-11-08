@@ -10,6 +10,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
 
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
@@ -56,6 +57,17 @@ func main() {
 		chkfatal(err)
 		fmt.Println(string(text))
 		return
+	}
+
+	fi, err := os.Stat(*configPath)
+	if err != nil {
+		log.Fatal("Error reading config file:", err)
+	}
+	if fi.Mode().Perm()&0077 != 0 {
+		log.Fatalf(
+			"Error: permissions on %q are too permissive; make "+
+				"sure only the obmd user may access the file.",
+			*configPath)
 	}
 
 	buf, err := ioutil.ReadFile(*configPath)
