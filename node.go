@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"crypto/rand"
 
 	"github.com/CCI-MOC/obmd/internal/driver"
 	"github.com/CCI-MOC/obmd/token"
@@ -34,8 +33,7 @@ func NewNode(d driver.Driver, info []byte) (*Node, error) {
 // clients using it. If an error occurs, the state of the node/token will
 // be unchanged.
 func (n *Node) NewToken() (token.Token, error) {
-	var tok token.Token
-	_, err := rand.Read(tok[:])
+	tok, err := token.New()
 	if err != nil {
 		return tok, err
 	}

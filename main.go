@@ -1,7 +1,6 @@
 package main
 
 import (
-	"crypto/rand"
 	"database/sql"
 	"encoding/json"
 	"flag"
@@ -51,8 +50,7 @@ func main() {
 
 	if *genToken {
 		// The user passed -gen-token; generate a token and exit.
-		var tok token.Token
-		_, err := rand.Read(tok[:])
+		tok, err := token.New()
 		chkfatal(err)
 		text, err := tok.MarshalText()
 		chkfatal(err)

@@ -33,6 +33,13 @@ func init() {
 	}
 }
 
+// Generate a new, cryptographically random token.
+func New() (Token, error) {
+	var ret Token
+	_, err := rand.Read(ret[:])
+	return ret, err
+}
+
 func None() Token {
 	return noToken
 }
