@@ -69,8 +69,7 @@ func (d *Daemon) InvalidateNodeToken(label string) error {
 	if err != nil {
 		return err
 	}
-	node.ClearToken()
-	return nil
+	return node.ClearToken()
 }
 
 // Get the node with the specified label, and check that `token` is valid for it.

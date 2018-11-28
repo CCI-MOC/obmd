@@ -20,28 +20,11 @@ var (
 // A cryptographically random 128-bit value.
 type Token [128 / 8]byte
 
-// A dummy token to be used when there is no "valid" token. This is
-// generated in init(), and never escapes the program. It exists so
-// we don't have to have special purpose logic for the case where
-// there is no correct token; we just set the node's token to this
-// value which is inaccessable to *anyone*.
-var noToken Token
-
-func init() {
-	if _, err := rand.Read(noToken[:]); err != nil {
-		panic(err)
-	}
-}
-
 // Generate a new, cryptographically random token.
 func New() (Token, error) {
 	var ret Token
 	_, err := rand.Read(ret[:])
 	return ret, err
-}
-
-func None() Token {
-	return noToken
 }
 
 func (t Token) MarshalText() ([]byte, error) {
