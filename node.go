@@ -38,7 +38,7 @@ func (n *Node) NewToken() (token.Token, error) {
 		return tok, err
 	}
 	n.ClearToken()
-	copy(n.CurrentToken[:], tok[:])
+	n.CurrentToken = tok
 	return n.CurrentToken, nil
 }
 
