@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"crypto/rand"
-	"crypto/subtle"
 
 	"github.com/CCI-MOC/obmd/internal/driver"
 	"github.com/CCI-MOC/obmd/token"
@@ -47,7 +46,7 @@ func (n *Node) NewToken() (token.Token, error) {
 
 // Return whether a token is valid.
 func (n *Node) ValidToken(tok token.Token) bool {
-	return subtle.ConstantTimeCompare(n.CurrentToken[:], tok[:]) == 1
+	return n.CurrentToken.Verify(tok) == nil
 }
 
 // Clear any existing token, and disconnect any clients

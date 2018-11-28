@@ -3,12 +3,19 @@ package token
 import (
 	"bytes"
 	"crypto/rand"
+	"crypto/subtle"
 	"errors"
 	"fmt"
 )
 
-// Error indicating that a token was malformed.
-var ErrInvalidToken = errors.New("Invalid token.")
+var (
+	// Error indicating that a token was malformed.
+	ErrInvalidToken = errors.New("Invalid token.")
+
+	// Indicating that verification failed, because the token was
+	// incorrect.
+	ErrIncorrectToken = errors.New("Incorrect token.")
+)
 
 // A cryptographically random 128-bit value.
 type Token [128 / 8]byte
@@ -51,6 +58,16 @@ func (t *Token) UnmarshalText(text []byte) error {
 	}
 	copy(t[:], buf)
 	return nil
+}
+
+// Return an error if the tokens do not match, nil otherwise. This is
+// constant time, and thus resistant to timing sidechannels -- DO NOT
+// compare the tokens for equality with (==).
+func (t Token) Verify(otherTok Token) error {
+	if subtle.ConstantTimeCompare(t[:], otherTok[:]) == 1 {
+		return nil
+	}
+	return ErrIncorrectToken
 }
 
 func isHexDigit(char byte) bool {
