@@ -1,10 +1,14 @@
-package main
+package token
 
 import (
 	"bytes"
 	"crypto/rand"
+	"errors"
 	"fmt"
 )
+
+// Error indicating that a token was malformed.
+var ErrInvalidToken = errors.New("Invalid token.")
 
 // A cryptographically random 128-bit value.
 type Token [128 / 8]byte
@@ -17,8 +21,13 @@ type Token [128 / 8]byte
 var noToken Token
 
 func init() {
-	_, err := rand.Read(noToken[:])
-	chkfatal(err)
+	if _, err := rand.Read(noToken[:]); err != nil {
+		panic(err)
+	}
+}
+
+func None() Token {
+	return noToken
 }
 
 func (t Token) MarshalText() ([]byte, error) {

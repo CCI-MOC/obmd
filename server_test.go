@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/CCI-MOC/obmd/internal/driver/mock"
+	"github.com/CCI-MOC/obmd/token"
 )
 
 // adminRequests is a sequence of admin-only requests that is used by various tests.
@@ -220,9 +221,9 @@ func TestPowerActions(t *testing.T) {
 			"pass": "secret"
 		}
 	}`)
-	token := getToken(t, handler, "somenode")
+	tok := getToken(t, handler, "somenode")
 
-	badToken, _ := Token{}.MarshalText() // All zeros
+	badToken, _ := token.Token{}.MarshalText() // All zeros
 
 	testCases := []struct {
 		context string
@@ -234,7 +235,7 @@ func TestPowerActions(t *testing.T) {
 		// Power off the node, and make sure that the operation went through.
 		{
 			"power off",
-			token,
+			tok,
 			http.StatusOK,
 			mock.Off,
 			requestSpec{"POST", "/node/somenode/power_off", ""},
@@ -242,7 +243,7 @@ func TestPowerActions(t *testing.T) {
 		// Power on the node, and make sure that the operation went through.
 		{
 			"power on",
-			token,
+			tok,
 			http.StatusOK,
 			mock.On,
 			requestSpec{"POST", "/node/somenode/power_on", ""},
@@ -260,7 +261,7 @@ func TestPowerActions(t *testing.T) {
 		// Now do it with the right token:
 		{
 			"power cycle (force, with good token)",
-			token,
+			tok,
 			http.StatusOK,
 			mock.ForceReboot,
 			requestSpec{
@@ -270,7 +271,7 @@ func TestPowerActions(t *testing.T) {
 		// Check the other operations:
 		{
 			"power cycle (soft, with good token)",
-			token,
+			tok,
 			http.StatusOK,
 			mock.SoftReboot,
 			requestSpec{
@@ -279,7 +280,7 @@ func TestPowerActions(t *testing.T) {
 		},
 		{
 			"set bootdev to A",
-			token,
+			tok,
 			http.StatusOK,
 			mock.BootDevA,
 			requestSpec{
@@ -288,7 +289,7 @@ func TestPowerActions(t *testing.T) {
 		},
 		{
 			"set bootdev to B",
-			token,
+			tok,
 			http.StatusOK,
 			mock.BootDevA,
 			requestSpec{
@@ -297,7 +298,7 @@ func TestPowerActions(t *testing.T) {
 		},
 		{
 			"set bootdev to something invalid.",
-			token,
+			tok,
 			http.StatusBadRequest,
 			mock.BootDevA, // should be unchanged.
 			requestSpec{
