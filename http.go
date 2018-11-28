@@ -1,7 +1,6 @@
 package main
 
 import (
-	"crypto/subtle"
 	"encoding/json"
 	"io"
 	"io/ioutil"
@@ -87,7 +86,7 @@ func makeHandler(config *Config, daemon *Daemon) http.Handler {
 		if err != nil {
 			return false
 		}
-		return subtle.ConstantTimeCompare(tok[:], config.AdminToken[:]) == 1
+		return config.AdminToken.Verify(tok) == nil
 	}).Subrouter()
 
 	// ------ Admin-only requests ------
