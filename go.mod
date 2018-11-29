@@ -1,6 +1,7 @@
 module github.com/CCI-MOC/obmd
 
 require (
+	github.com/caarlos0/env v3.5.0+incompatible
 	github.com/gorilla/mux v1.6.2
 	github.com/kr/pty v1.1.3
 	github.com/lib/pq v1.0.0

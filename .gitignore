@@ -1,9 +1,6 @@
 # The executable:
 /obmd
 
-# default path for the config file:
-/config.json
-
 # vim swap files:
 *.swp
 

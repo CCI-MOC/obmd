@@ -2,17 +2,16 @@ package main
 
 import (
 	"database/sql"
-	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
-	"os"
 
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
+
+	"github.com/caarlos0/env"
 
 	"github.com/CCI-MOC/obmd/internal/driver"
 	"github.com/CCI-MOC/obmd/internal/driver/dummy"
@@ -23,18 +22,17 @@ import (
 
 // Contents of the config file
 type Config struct {
-	DBType     string
-	DBPath     string
-	ListenAddr string
-	AdminToken token.Token
-	Insecure   bool
-	TLSCert    string
-	TLSKey     string
+	DBType     string      `env:"DB_TYPE,required"`
+	DBPath     string      `env:"DB_PATH,required"`
+	ListenAddr string      `env:"LISTEN_ADDR,required"`
+	AdminToken token.Token `env:"ADMIN_TOKEN,required"`
+	Insecure   bool        `env:"INSECURE" envDefault:"false"`
+	TLSCert    string      `env:"TLS_CERT"`
+	TLSKey     string      `env:"TLS_KEY"`
 }
 
 var (
-	configPath = flag.String("config", "config.json", "Path to config file")
-	genToken   = flag.Bool("gen-token", false,
+	genToken = flag.Bool("gen-token", false,
 		"Generate a random token, instead of starting the daemon.")
 )
 
@@ -43,6 +41,14 @@ func chkfatal(err error) {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func getConfig() Config {
+	cfg := Config{}
+	if err := env.Parse(&cfg); err != nil {
+		log.Fatal("Parsing config from environment: ", err)
+	}
+	return cfg
 }
 
 func main() {
@@ -58,21 +64,8 @@ func main() {
 		return
 	}
 
-	fi, err := os.Stat(*configPath)
-	if err != nil {
-		log.Fatal("Error reading config file:", err)
-	}
-	if fi.Mode().Perm()&0077 != 0 {
-		log.Fatalf(
-			"Error: permissions on %q are too permissive; make "+
-				"sure only the obmd user may access the file.",
-			*configPath)
-	}
+	config := getConfig()
 
-	buf, err := ioutil.ReadFile(*configPath)
-	chkfatal(err)
-	var config Config
-	chkfatal(json.Unmarshal(buf, &config))
 	// DB Types: sqlite3 or postgres
 	db, err := sql.Open(config.DBType, config.DBPath)
 	chkfatal(err)
