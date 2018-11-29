@@ -11,24 +11,24 @@ change the explanations to avoid this prerequisite in the future.
 
 # Configuration
 
-A config file is needed, whose contents should look like:
+OBMd pulls configuration information from environment variables; The
+following variables are recognized:
 
+* `DB_TYPE` -- the DBMS to use for storage. This can be either `sqlite3`
+  or `postgres`.
+* `DB_PATH` -- how to connect to the database.
+  * For `sqlite3` this can be either a file path or the special string
+    `:memory:` for an in-memory database. For
+  * For `postgres` this will be something like
 
-```json
-{
-	"DBType":     	"sqlite3",
-	"DBPath":     	"./obmd.db",
-	"ListenAddr": 	":8080",
-	"AdminToken": 	"44d5ebcb1aae23bfefc8dca8314797eb",
-	"TLSCert":	"server.crt",
-	"TLSKey":	"server.key"
-}
-```
-
-The choices for database type are `sqlite3` and `postgres`.
-If using postgres, the DBPath string might look like:
-
-	"host=localhost port=5432 user=username password=pass dbname=obmd"
+        "host=localhost port=5432 user=username password=pass dbname=obmd"
+* `LISTEN_ADDR` -- the network address to listen on.
+* `ADMIN_TOKEN` -- the admin token, see below.
+* `TLS_CERT` -- the path to a file containing a (pem encoded) TLS
+  certificate.
+* `TLS_KEY` -- the path to a file containing a (pem encoded) TLS
+  private key.
+* `INSECURE` -- see below.
 
 The admin token should be a (cryptographically randomly generated)
 128-bit value encoded in hexadecimal. You can generate such a token by
@@ -38,15 +38,9 @@ running:
 
 By default, OBMd listens for connections via https. While production
 environments should *never* change this, it can be convenient for
-development to make OBMd listen via plaintext http. To do this, add an
-option `"Insecure": true` in the config file, and remove the `TLSCert`
-and `TLSKey` options.
-
-By default, the server looks for the config file at `./config.json`, but
-the `-config` command line option can be used to override this. OBMd
-will refuse to run if the file's permissions are such that any use other
-than the owner may access the file; this is a sanity check for insecure
-configurations, as the file contains sensitive information.
+development to make OBMd listen via plaintext http. To do this, set the
+environment variable `INSECURE` to `true`, and make sure `TLS_CERT`
+and `TLS_KEY` are unset.
 
 # Api
 
@@ -58,7 +52,7 @@ by `docs/rest_api.md` in the HIL source tree.
 
 Each admin operation requires the client to authenticate using basic
 auth, with a username of "admin" and a password equal to the
-"AdminToken" in the config file.
+value of the "ADMIN_TOKEN" environment variable.
 
 ### Registering a node
 
