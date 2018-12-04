@@ -18,7 +18,7 @@ following variables are recognized:
   or `postgres`.
 * `DB_PATH` -- how to connect to the database.
   * For `sqlite3` this can be either a file path or the special string
-    `:memory:` for an in-memory database. For
+    `:memory:` for an in-memory database.
   * For `postgres` this will be something like
 
         "host=localhost port=5432 user=username password=pass dbname=obmd"
