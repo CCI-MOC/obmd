@@ -15,7 +15,8 @@ type Node struct {
 	CurrentToken token.Token        // Token for regular user operations.
 }
 
-// Returns a new node with the given driver information, with no valid token.
+// Returns a new node with the given driver information. The token will be
+// freshly generated.
 func NewNode(d driver.Driver, info []byte) (*Node, error) {
 	tok, err := token.New()
 	if err != nil {
