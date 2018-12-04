@@ -72,7 +72,7 @@ func (d *Daemon) InvalidateNodeToken(label string) error {
 	return node.ClearToken()
 }
 
-// Get the node with the specified label, and check that `token` is valid for it.
+// Get the node with the specified label, and check that `tok` is valid for it.
 // Returns an error if the node does not exist or token is invalid.
 func (d *Daemon) getNodeWithToken(label string, tok *token.Token) (*Node, error) {
 	node, err := d.state.GetNode(label)
@@ -85,59 +85,59 @@ func (d *Daemon) getNodeWithToken(label string, tok *token.Token) (*Node, error)
 	return node, nil
 }
 
-func (d *Daemon) usingNodeWithToken(label string, token *token.Token,
+func (d *Daemon) usingNodeWithToken(label string, tok *token.Token,
 	f func(*Node) error) error {
 	d.Lock()
 	defer d.Unlock()
-	node, err := d.getNodeWithToken(label, token)
+	node, err := d.getNodeWithToken(label, tok)
 	if err != nil {
 		return err
 	}
 	return f(node)
 }
 
-func (d *Daemon) DialNodeConsole(label string, token *token.Token) (io.ReadCloser, error) {
+func (d *Daemon) DialNodeConsole(label string, tok *token.Token) (io.ReadCloser, error) {
 	d.Lock()
 	defer d.Unlock()
-	node, err := d.getNodeWithToken(label, token)
+	node, err := d.getNodeWithToken(label, tok)
 	if err != nil {
 		return nil, err
 	}
 	return node.OBM.DialConsole()
 }
 
-func (d *Daemon) PowerOnNode(label string, token *token.Token) error {
-	return d.usingNodeWithToken(label, token, func(n *Node) error {
+func (d *Daemon) PowerOnNode(label string, tok *token.Token) error {
+	return d.usingNodeWithToken(label, tok, func(n *Node) error {
 		return n.OBM.PowerOn()
 	})
 }
 
-func (d *Daemon) PowerOffNode(label string, token *token.Token) error {
-	return d.usingNodeWithToken(label, token, func(n *Node) error {
+func (d *Daemon) PowerOffNode(label string, tok *token.Token) error {
+	return d.usingNodeWithToken(label, tok, func(n *Node) error {
 		return n.OBM.PowerOff()
 	})
 }
 
-func (d *Daemon) PowerCycleNode(label string, force bool, token *token.Token) error {
-	return d.usingNodeWithToken(label, token, func(n *Node) error {
+func (d *Daemon) PowerCycleNode(label string, force bool, tok *token.Token) error {
+	return d.usingNodeWithToken(label, tok, func(n *Node) error {
 		return n.OBM.PowerCycle(force)
 	})
 }
 
-func (d *Daemon) SetNodeBootDev(label string, dev string, token *token.Token) error {
+func (d *Daemon) SetNodeBootDev(label string, dev string, tok *token.Token) error {
 	d.Lock()
 	defer d.Unlock()
-	node, err := d.getNodeWithToken(label, token)
+	node, err := d.getNodeWithToken(label, tok)
 	if err != nil {
 		return err
 	}
 	return node.OBM.SetBootdev(dev)
 }
 
-func (d *Daemon) GetNodePowerStatus(label string, token *token.Token) (string, error) {
+func (d *Daemon) GetNodePowerStatus(label string, tok *token.Token) (string, error) {
 	d.Lock()
 	defer d.Unlock()
-	node, err := d.getNodeWithToken(label, token)
+	node, err := d.getNodeWithToken(label, tok)
 	if err != nil {
 		return "", err
 	}

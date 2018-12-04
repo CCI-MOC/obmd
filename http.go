@@ -110,13 +110,13 @@ func makeHandler(config *Config, daemon *Daemon) http.Handler {
 
 	adminR.Methods("POST").Path("/node/{node_id}/token").
 		HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			token, err := daemon.GetNodeToken(nodeId(req))
+			tok, err := daemon.GetNodeToken(nodeId(req))
 			if err != nil {
 				relayError(w, "daemon.GetNodeToken()", err)
 			} else {
 				w.Header().Set("Content-Type", "application/json")
 				json.NewEncoder(w).Encode(&TokenResp{
-					Token: token,
+					Token: tok,
 				})
 			}
 		})
