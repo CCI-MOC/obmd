@@ -22,7 +22,7 @@ type Config struct {
 func (config *Config) Validate() error {
 	host, _, err := net.SplitHostPort(config.ListenAddr)
 	if err != nil {
-		return fmt.Errorf("Error parsing ListenAddr: %v", err)
+		return fmt.Errorf("Error parsing LISTEN_ADDR: %v", err)
 	}
 
 	hostIP := net.ParseIP(host)
@@ -35,20 +35,22 @@ func (config *Config) Validate() error {
 
 	if config.Insecure && haveCert {
 		return errors.New("Error: Do not specify TLS certificate file" +
-			" when Insecure is true.")
+			" when INSECURE is true (unset the TLS_CERT environment variable).")
 	}
 	if config.Insecure && haveKey {
 		return errors.New("Error: Do not specify TLS key file" +
-			" when Insecure is true.")
+			" when INSECURE is true (unset the TLS_KEY environment variable).")
 	}
 
 	if haveCert && !haveKey {
 		return errors.New("A TLS cert was specified without a key; you must" +
-			" specifiy both or neither.")
+			" specifiy both the environment variables TLS_CERT and TLS_KEY," +
+			" or neither.")
 	}
 	if haveKey && !haveCert {
 		return errors.New("A TLS key was specified without a cert; you must" +
-			" specifiy both or neither.")
+			" specifiy both the environment variables TLS_CERT and TLS_KEY," +
+			" or neither.")
 	}
 
 	if !config.Insecure && !haveKey && !isLoopback {
@@ -57,7 +59,7 @@ func (config *Config) Validate() error {
 			" You should generate and specify a TLS keypair, or" +
 			" only listen on the loopback interface (127.0.0.1, or" +
 			" ::1 for ipv6). If you REALLY want to do this, you can" +
-			" set the Insecure option to true."
+			" set the INSECURE environment variable to true."
 		if host == "localhost" {
 			msg += "\n\nNote that setting the host to \"localhost\"" +
 				" is not sufficient; you must specify the" +
