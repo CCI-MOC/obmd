@@ -1,4 +1,4 @@
-// Package httpserver handle the logic of configuring an HTTP server with TLS
+// Package httpserver handles the logic of configuring an HTTP server with TLS
 // certs, choosing a port to listen on, etc, which is orthogonal to the business
 // logic of the actual service.
 package httpserver
