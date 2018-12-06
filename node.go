@@ -2,10 +2,9 @@ package main
 
 import (
 	"context"
-	"crypto/rand"
-	"crypto/subtle"
 
 	"github.com/CCI-MOC/obmd/internal/driver"
+	"github.com/CCI-MOC/obmd/token"
 )
 
 // Information about a node
@@ -13,46 +12,58 @@ type Node struct {
 	ConnInfo     []byte             // Connection info for this node's OBM.
 	ObmCancel    context.CancelFunc // stop the OBM
 	OBM          driver.OBM         // OBM for this node.
-	CurrentToken Token              // Token for regular user operations.
+	CurrentToken token.Token        // Token for regular user operations.
 }
 
-// Returns a new node with the given driver information, with no valid token.
+// Returns a new node with the given driver information. The token will be
+// freshly generated.
 func NewNode(d driver.Driver, info []byte) (*Node, error) {
+	tok, err := token.New()
+	if err != nil {
+		return nil, err
+	}
+
 	obm, err := d.GetOBM(info)
 	if err != nil {
 		return nil, err
 	}
 	ret := &Node{
-		OBM:      obm,
-		ConnInfo: info,
+		OBM:          obm,
+		ConnInfo:     info,
+		CurrentToken: tok,
 	}
-	copy(ret.CurrentToken[:], noToken[:])
 	return ret, nil
 }
 
 // Generate a new token, invaidating the old one if any, and disconnecting
 // clients using it. If an error occurs, the state of the node/token will
 // be unchanged.
-func (n *Node) NewToken() (Token, error) {
-	var token Token
-	_, err := rand.Read(token[:])
-	if err != nil {
-		return token, err
+func (n *Node) NewToken() (token.Token, error) {
+	if err := n.ClearToken(); err != nil {
+		return token.Token{}, err
 	}
-	n.ClearToken()
-	copy(n.CurrentToken[:], token[:])
+	tok, err := token.New()
+	if err != nil {
+		return tok, err
+	}
+	n.CurrentToken = tok
 	return n.CurrentToken, nil
 }
 
 // Return whether a token is valid.
-func (n *Node) ValidToken(token Token) bool {
-	return subtle.ConstantTimeCompare(n.CurrentToken[:], token[:]) == 1
+func (n *Node) ValidToken(tok token.Token) bool {
+	return n.CurrentToken.Verify(tok) == nil
 }
 
 // Clear any existing token, and disconnect any clients
-func (n *Node) ClearToken() {
+func (n *Node) ClearToken() error {
+	var err error
 	n.OBM.DropConsole()
-	copy(n.CurrentToken[:], noToken[:])
+	// We just overwrite the token with a new one, which we never actually
+	// share with the outside world. So technically there's still a valid
+	// token, but nobody knows it, so the node is effectively inaccessible.
+	n.CurrentToken, err = token.New()
+	return err
 }
 
 func (n *Node) StartOBM() {

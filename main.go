@@ -1,7 +1,6 @@
 package main
 
 import (
-	"crypto/rand"
 	"database/sql"
 	"encoding/json"
 	"flag"
@@ -19,6 +18,7 @@ import (
 	"github.com/CCI-MOC/obmd/internal/driver/dummy"
 	"github.com/CCI-MOC/obmd/internal/driver/ipmi"
 	"github.com/CCI-MOC/obmd/internal/driver/mock"
+	"github.com/CCI-MOC/obmd/token"
 )
 
 // Contents of the config file
@@ -26,7 +26,7 @@ type Config struct {
 	DBType     string
 	DBPath     string
 	ListenAddr string
-	AdminToken Token
+	AdminToken token.Token
 	Insecure   bool
 	TLSCert    string
 	TLSKey     string
@@ -50,8 +50,7 @@ func main() {
 
 	if *genToken {
 		// The user passed -gen-token; generate a token and exit.
-		var tok Token
-		_, err := rand.Read(tok[:])
+		tok, err := token.New()
 		chkfatal(err)
 		text, err := tok.MarshalText()
 		chkfatal(err)

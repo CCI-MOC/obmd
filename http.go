@@ -1,7 +1,6 @@
 package main
 
 import (
-	"crypto/subtle"
 	"encoding/json"
 	"io"
 	"io/ioutil"
@@ -11,6 +10,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/CCI-MOC/obmd/internal/driver"
+	"github.com/CCI-MOC/obmd/token"
 )
 
 // request body for the power cycle call
@@ -34,7 +34,7 @@ type ConnInfo struct {
 
 // Response body for successful new token requests.
 type TokenResp struct {
-	Token Token `json:"token"`
+	Token token.Token `json:"token"`
 }
 
 // Response body for successful node power status requests.
@@ -55,7 +55,7 @@ func makeHandler(config *Config, daemon *Daemon) http.Handler {
 			w.WriteHeader(http.StatusOK)
 		case ErrNoSuchNode:
 			w.WriteHeader(http.StatusNotFound)
-		case ErrInvalidToken:
+		case token.ErrInvalidToken:
 			w.WriteHeader(http.StatusUnauthorized)
 		case driver.ErrInvalidBootdev:
 			w.WriteHeader(http.StatusBadRequest)
@@ -81,12 +81,12 @@ func makeHandler(config *Config, daemon *Daemon) http.Handler {
 		if !(ok && user == "admin") {
 			return false
 		}
-		var tok Token
+		var tok token.Token
 		err := (&tok).UnmarshalText([]byte(pass))
 		if err != nil {
 			return false
 		}
-		return subtle.ConstantTimeCompare(tok[:], config.AdminToken[:]) == 1
+		return config.AdminToken.Verify(tok) == nil
 	}).Subrouter()
 
 	// ------ Admin-only requests ------
@@ -110,13 +110,13 @@ func makeHandler(config *Config, daemon *Daemon) http.Handler {
 
 	adminR.Methods("POST").Path("/node/{node_id}/token").
 		HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			token, err := daemon.GetNodeToken(nodeId(req))
+			tok, err := daemon.GetNodeToken(nodeId(req))
 			if err != nil {
 				relayError(w, "daemon.GetNodeToken()", err)
 			} else {
 				w.Header().Set("Content-Type", "application/json")
 				json.NewEncoder(w).Encode(&TokenResp{
-					Token: token,
+					Token: tok,
 				})
 			}
 		})
@@ -131,21 +131,21 @@ func makeHandler(config *Config, daemon *Daemon) http.Handler {
 
 	// Helper which extracts the token from the query string, and passes it to the "real"
 	// handler. Note that this doesn't check the validity of the token, merely parses it.
-	withToken := func(handler func(http.ResponseWriter, *http.Request, *Token)) http.Handler {
+	withToken := func(handler func(http.ResponseWriter, *http.Request, *token.Token)) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			var token Token
-			err := (&token).UnmarshalText([]byte(req.URL.Query().Get("token")))
+			var tok token.Token
+			err := (&tok).UnmarshalText([]byte(req.URL.Query().Get("token")))
 			if err != nil {
 				relayError(w, "getToken()", err)
 				return
 			}
-			handler(w, req, &token)
+			handler(w, req, &tok)
 		})
 	}
 
 	r.Methods("GET").Path("/node/{node_id}/console").
-		Handler(withToken(func(w http.ResponseWriter, req *http.Request, token *Token) {
-			conn, err := daemon.DialNodeConsole(nodeId(req), token)
+		Handler(withToken(func(w http.ResponseWriter, req *http.Request, tok *token.Token) {
+			conn, err := daemon.DialNodeConsole(nodeId(req), tok)
 			if err != nil {
 				relayError(w, "daemon.DialNodeConsole()", err)
 			} else {
@@ -184,42 +184,42 @@ func makeHandler(config *Config, daemon *Daemon) http.Handler {
 		}))
 
 	r.Methods("POST").Path("/node/{node_id}/power_cycle").
-		Handler(withToken(func(w http.ResponseWriter, req *http.Request, token *Token) {
+		Handler(withToken(func(w http.ResponseWriter, req *http.Request, tok *token.Token) {
 			var args PowerCycleArgs
 			err := json.NewDecoder(req.Body).Decode(&args)
 			if err != nil {
 				w.WriteHeader(http.StatusBadRequest)
 				return
 			}
-			err = daemon.PowerCycleNode(nodeId(req), args.Force, token)
+			err = daemon.PowerCycleNode(nodeId(req), args.Force, tok)
 			relayError(w, "daemon.PowerCycleNode()", err)
 		}))
 
 	r.Methods("POST").Path("/node/{node_id}/power_on").
-		Handler(withToken(func(w http.ResponseWriter, req *http.Request, token *Token) {
-			relayError(w, "daemon.PowerOn()", daemon.PowerOnNode(nodeId(req), token))
+		Handler(withToken(func(w http.ResponseWriter, req *http.Request, tok *token.Token) {
+			relayError(w, "daemon.PowerOn()", daemon.PowerOnNode(nodeId(req), tok))
 		}))
 
 	r.Methods("POST").Path("/node/{node_id}/power_off").
-		Handler(withToken(func(w http.ResponseWriter, req *http.Request, token *Token) {
-			relayError(w, "daemon.PowerOff()", daemon.PowerOffNode(nodeId(req), token))
+		Handler(withToken(func(w http.ResponseWriter, req *http.Request, tok *token.Token) {
+			relayError(w, "daemon.PowerOff()", daemon.PowerOffNode(nodeId(req), tok))
 		}))
 
 	r.Methods("PUT").Path("/node/{node_id}/boot_device").
-		Handler(withToken(func(w http.ResponseWriter, req *http.Request, token *Token) {
+		Handler(withToken(func(w http.ResponseWriter, req *http.Request, tok *token.Token) {
 			var args SetBootdevArgs
 			err := json.NewDecoder(req.Body).Decode(&args)
 			if err != nil {
 				w.WriteHeader(http.StatusBadRequest)
 				return
 			}
-			err = daemon.SetNodeBootDev(nodeId(req), args.Dev, token)
+			err = daemon.SetNodeBootDev(nodeId(req), args.Dev, tok)
 			relayError(w, "daemon.SetNodeBootDev()", err)
 		}))
 
 	r.Methods("GET").Path("/node/{node_id}/power_status").
-		Handler(withToken(func(w http.ResponseWriter, req *http.Request, token *Token) {
-			status, err := daemon.GetNodePowerStatus(nodeId(req), token)
+		Handler(withToken(func(w http.ResponseWriter, req *http.Request, tok *token.Token) {
+			status, err := daemon.GetNodePowerStatus(nodeId(req), tok)
 			if err != nil {
 				relayError(w, "daemon.GetNodePowerStatus()", err)
 			} else {
