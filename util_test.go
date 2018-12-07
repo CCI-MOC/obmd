@@ -26,9 +26,7 @@ func errpanic(err error) {
 }
 
 func init() {
-	theConfig = &Config{
-		ListenAddr: ":8080", // Not actually used directly by the handler.
-	}
+	theConfig = &Config{}
 	errpanic((&theConfig.AdminToken).
 		UnmarshalText([]byte("44d5ebcb1aae23bfefc8dca8314797eb")))
 }
