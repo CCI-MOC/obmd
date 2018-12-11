@@ -9,6 +9,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/CCI-MOC/obmd/adminauth"
 	"github.com/CCI-MOC/obmd/internal/driver"
 	"github.com/CCI-MOC/obmd/token"
 )
@@ -71,25 +72,10 @@ func makeHandler(config *Config, daemon *Daemon) http.Handler {
 		return mux.Vars(req)["node_id"]
 	}
 
-	// Router for admin-only requests. Because we validate the admin token here,
-	// anything with an invalid admin token will simply not match, returning 404
-	// (Not found). TODO: think about whether we want that as an explicit security
-	// feature. It masks the presence or abscence of nodes, which is nice (but if
-	// we're to rely on that, we need to mitigate timing attacks).
-	adminR := r.MatcherFunc(func(req *http.Request, m *mux.RouteMatch) bool {
-		user, pass, ok := req.BasicAuth()
-		if !(ok && user == "admin") {
-			return false
-		}
-		var tok token.Token
-		err := (&tok).UnmarshalText([]byte(pass))
-		if err != nil {
-			return false
-		}
-		return config.AdminToken.Verify(tok) == nil
-	}).Subrouter()
-
 	// ------ Admin-only requests ------
+
+	// Router for admin-only requests.
+	adminR := adminauth.AdminRouter(config.AdminToken, r)
 
 	// Register a new node, or update the information in an existing one.
 	adminR.Methods("PUT").Path("/node/{node_id}").
