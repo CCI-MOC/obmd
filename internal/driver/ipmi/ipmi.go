@@ -60,7 +60,7 @@ type server struct {
 //
 // This injects the shutdown command ".~" into the the impitool process's Stdin,
 // and then after a grace period, kills the process. It also runs ipmitool ...
-// sol deactivate which (imperically) is necessary on some OBMs, but not all.
+// sol deactivate which (empirically) is necessary on some OBMs, but not all.
 func (p *ipmitoolProcess) Shutdown() error {
 	_, errWrite := p.conn.Write([]byte("~.\n"))
 	errClose := p.conn.Close()
