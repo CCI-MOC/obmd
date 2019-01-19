@@ -31,9 +31,10 @@ func (dummyDriver) GetOBM(info []byte) (driver.OBM, error) {
 }
 
 type dummyOBM struct {
-	Addr      string   `json:"addr"`
-	conn      net.Conn `json:"-"`
+	Addr      string `json:"addr"`
 	PwrStatus string
+
+	conn net.Conn
 }
 
 func (d *dummyOBM) Serve(ctx context.Context) {
@@ -43,8 +44,8 @@ func (d *dummyOBM) Serve(ctx context.Context) {
 
 func (d *dummyOBM) DropConsole() error {
 	if d.conn != nil {
-		return d.conn.Close()
 		d.conn = nil
+		return d.conn.Close()
 	}
 	return nil
 }
