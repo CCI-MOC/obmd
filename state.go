@@ -19,7 +19,7 @@ type State struct {
 	driver driver.Driver
 }
 
-// Create a State from a database. This loads existant objects in immediately.
+// Create a State from a database. This loads existent objects in immediately.
 func NewState(db *sql.DB, driver driver.Driver) (*State, error) {
 	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS nodes (
 		label VARCHAR(80) PRIMARY KEY,

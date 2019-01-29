@@ -11,7 +11,7 @@ import (
 // via basic auth. If the username is not admin or the token does not match
 // the argument, none of the routes registered on the returned router will match,
 // instead returning 404 (Not found). TODO: think about whether we want that
-// as an explicit security feature. It masks the presence or abscence of nodes,
+// as an explicit security feature. It masks the presence or absence of nodes,
 // which is nice (but if we're to rely on that, we need to mitigate timing
 // attacks).
 func AdminRouter(tok token.Token, r *mux.Router) *mux.Router {

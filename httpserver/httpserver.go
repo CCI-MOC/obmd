@@ -44,12 +44,12 @@ func (config *Config) Validate() error {
 
 	if haveCert && !haveKey {
 		return errors.New("A TLS cert was specified without a key; you must" +
-			" specifiy both the environment variables TLS_CERT and TLS_KEY," +
+			" specify both the environment variables TLS_CERT and TLS_KEY," +
 			" or neither.")
 	}
 	if haveKey && !haveCert {
 		return errors.New("A TLS key was specified without a cert; you must" +
-			" specifiy both the environment variables TLS_CERT and TLS_KEY," +
+			" specify both the environment variables TLS_CERT and TLS_KEY," +
 			" or neither.")
 	}
 
